@@ -1,0 +1,92 @@
+What is Celery ?
+
+*Celery is a task queue for executing work outside a python web application HTTP request-response cycle.
+*A task queue's input is a unit of work called a task. Dedicated worker processes constantly monitor task
+queues for new work to perform.
+
+Why to use celery ?
+* Third party api calling
+* For high cpu intensive tasks.
+* Periodic/Scheduled tasks.
+* For improving user experience.
+
+
+Celery requires a message transport to communicate between celery worker and the application\
+
+* Celery requires a "message transport" to send and receive messages
+* Supported brokers - RabbitMQ, Redis, Amazon SQS
+* Result stores - AMQP, Redis, Memcached, Django ORM, Elasticsearch, MongoDB, Amazon S3, FileSystem
+* Serialization - (Serialization for structuring data)
+    ~ pickle, json, yaml, msgpack
+    ~ zlib, bzip2 compression
+    ~ Cryptographic message signing
+
+
+* A celery system can consist of multiple workers and brokers,
+giving way to high availability and horizontal scaling.
+
+
+
+Worker
+------
+When you start a Celery worker on the command line via celery -- app=..., you just start a supervisor process.
+The Celery worker itself does not process any tasks. It spawns child process (or threads) and deals with all the book keeping stuff.
+The child processes (or threads) execute the actual tasks.The child processes (or threads) are also known as the execution pool.
+
+The size of the execution pool determines the number of tasks your Celery worker can process concurrently at one single point of time.
+    - But That totally depends on how many CPU cores your system has
+
+
+Celery default use multiprocess concept by starting child process.
+
+When Celery starts multiple child processes that's called as Pool of child processes of Pool.
+
+No. of Child processes Celery Spawns or Create child processes  by seeing No. of CPU cores your system has
+
+
+
+Worker -> Pool -> Concurrency
+-----------------------------
+When you start a celery worker, you specify the pool, concurrency, autoscale etc. in the command.
+
+pool - decides who will actually perform the task - thread,child process,worker itself or else.
+
+concurrency - concurrency will decide the size of pool.
+
+autoscale - to dynamically resize the pool based on load. The autoscaler adds more pool processes when there is work to do,
+and starts removing processes when the workload is low.
+
+Command = $ celery -A <project> celery worker --pool=prefork --concurrency=5 --autoscale=10,3 - info
+
+
+Instead of creating separate child processes we can create multiple threads
+
+Should I use the pool of threads or Should I use the pool of child processes ?
+    - That totally depends on the type of tasks you are performing.
+    - If it's a CPU bound task then you will allocate task to the child process.
+    - If most of the task are I/O based then recommend to use thread pool.
+
+| prefork = Means we are using multiprocessing or we are using child processes.
+| Child processes basically means worker processes means we are creating multiple workers
+| When we hit the command it crates one worker and this worker internally create multiple child processes
+| Concurrency - When you have decided to use multiprocessing pool or worker processes pool, Now you will have to mention how large the pool should be
+               How much child processes you want that your worker should create.
+               - By default it has set to the no. of cores your system has but you can increase that or decrease that.
+               - By increasing that there is no point of use because it only allocates the no of workers is equal to the cpu cores.
+
+| autoscale - 10,3 means max 10 and min 3 . Autoscale can create more child processes up to 10. But only if we have 10 cpu cores
+
+Celery supports following execution pool implementation
+-------------------------------------------------------
+*prefork (multiprocessing) [default]
+*solo
+*threads (multithreading)
+*eventlet
+*gevent
+
+When you normally start the celery worker using-
+$ celery -A <project>.celery worker -l info
+
+By default, pool-> prefork and concurrency -> no. of cores
+
+
