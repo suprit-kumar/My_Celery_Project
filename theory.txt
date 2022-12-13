@@ -66,7 +66,7 @@ Should I use the pool of threads or Should I use the pool of child processes ?
     - If it's a CPU bound task then you will allocate task to the child process.
     - If most of the task are I/O based then recommend to use thread pool.
 
-| prefork = Means we are using multiprocessing or we are using child processes.
+| prefork = Means we are using multiprocessing, or we are using child processes.
 | Child processes basically means worker processes means we are creating multiple workers
 | When we hit the command it crates one worker and this worker internally create multiple child processes
 | Concurrency - When you have decided to use multiprocessing pool or worker processes pool, Now you will have to mention how large the pool should be
@@ -90,3 +90,79 @@ $ celery -A <project>.celery worker -l info
 By default, pool-> prefork and concurrency -> no. of cores
 
 
+Prefork
+--------
+* Based on Python's multiprocessing package.
+* Allows your celery worker to side-step Python's Global interpreter lock.
+  and fully leverage multiple processors on a given machine.
+* Use the prefork pool if your tasks are cpu bound.
+* The number of available cores limits the number of concurrent processes.
+* It only makes sense to run as many CPU tasks in parallel as there are CPUs available.
+* That's why celery defaults to the number of CPUs available on the machine
+  if the -concurrency argument is not set
+
+Command -> $ celery -A <project>.celery worker -l info
+
+Solo
+----
+* Neither threaded nor process based
+* Not even a pool as it is always solo
+* Contradicts the principle that the worker itself does not process any tasks
+* The solo pool runs inside the worker process
+* Runs inline which means there is no bookkeeping overhead
+* This make the solo worker fast. But it also blocks the worker while it execute tasks.
+* But it also blocks the worker while executes the tasks.
+* In this concurrency doesn't make any sense.
+
+Command -> celery -A <project>.celery worker --pool=solo -l info
+
+Eventlet and gevent
+-------------------
+* Ex - To execute thousands of HTTP GET requests to fetch data from external REST APIs.
+* The bottleneck is waiting for an input/Output operation to finish not CPU.
+* Two thread-based execution pools; eventlet and gevent.
+* To be precise, both eventlet and gevent use greenlets and not threads.
+* There are implementation differences between the eventlet and gevent packages.
+
+Command -
+pip install gevent/eventlet
+$ celery -A <project>.celery --pool=[gevent/eventlet] worker -l info
+
+Difference between greenlets and threads.
+-----------------------------------------
+* Python's threading library makes use of the system's native OS to schedule
+  threads. This general-purpose schedular is not always very efficient.
+* It makes use of Python's global interpreter lock to make sure shared data
+  structures are accessed by only one thread at a time to avoid race conditions.
+* CPython interpreter , GIL, OS
+* Greenlets emulate multithreaded environments without relying on any native operating system capabilities.
+* Greenlets are managed application space and not in kernel space.
+* In greenlets, no schedular pre-emptively switching between your threads at any given moment.
+* Instead, Your greenlets voluntarily or explicitly give up control to one another at specified points in your code.
+* Thus more scalable and efficient.
+* Less RAM required
+
+
+Threads
+-------
+* Multithreading concept
+* Uses threading module of python
+* Not much official support
+
+Command -> celery -A <project>.celery worker --pool=threads -l info
+
+
+
+Number of processes (multiprocessing/perfork pool)
+-------------------------------------------------
+More pool processes are usually better, but there's a cut-off point where adding more
+pool processes affects performance in negetive ways. There's even some evidence to support that
+having multiple worker instances running, May perform better than having a single worker.
+For example 3 workers with 10 pool processes each. You need to experiment
+to find the numbers that works best for you, as this varies based on application, work load,
+task run times and factors.
+
+Why multiple workers ?
+----------------------
+Running two celery workers on the same machine, each worker servicing a different queue
+(in this case the queue names are "default" and "important")
