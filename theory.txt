@@ -166,3 +166,9 @@ Why multiple workers ?
 ----------------------
 Running two celery workers on the same machine, each worker servicing a different queue
 (in this case the queue names are "default" and "important")
+
+
+
+celery -A MyCeleryProject.celery worker --pool=solo -l info
+
+celery -A MyCeleryProject beat -l INFO
