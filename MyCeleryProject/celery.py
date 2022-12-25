@@ -4,6 +4,9 @@ import os
 
 from celery import Celery
 from django.conf import settings
+from celery.schedules import crontab
+# from django_celery_beat.models import PeriodicTask
+
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'MyCeleryProject.settings')
@@ -21,14 +24,11 @@ app.config_from_object(settings, namespace='CELERY')
 
 app.conf.beat_schedule = {
     # #Scheduler Name
-    # 'print-message-ten-seconds': {
-    #     # Task Name (Name Specified in Decorator)
-    #     'task': 'print_msg_main',
-    #     # Schedule
-    #     'schedule': 10.0,
-    #     # Function Arguments
-    #     'args': ("Hello",)
-    # },
+    "send-mail-every-interval-at-8":{
+        "task":"mail_app.tasks.mail_func",
+        "schedule":crontab(hour=21,minute=29),
+        # "args":(2)
+    }
 }
 
 
