@@ -9,3 +9,9 @@ def check_loop_task(request):
     loop_task.delay()
     return HttpResponse("Done")
 
+
+def index(request):
+    # Calling celery task
+    print("Inside check loop task")
+    return HttpResponse("Welcome to the page")
+
