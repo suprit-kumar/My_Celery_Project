@@ -1,7 +1,11 @@
 version: '3.8'
 services:
+   redis:
+      image: redis:alpine
+      container_name: redis-master
+
    django_service:
-       image: my_celery_app:v3
+       image: my_celery_app:v4
        container_name: django_container
        ports:
          - 8000:8000
@@ -22,6 +26,22 @@ services:
        - POSTGRES_PASSWORD=postgres
      container_name: postgres_db
 
+   celery:
+     restart: always
+     container_name: celery
+     image: my_celery_app:v4
+     command: celery -A MyCeleryProject.celery worker --pool=solo -l debug
+     volumes:
+       - celeryservice:/django
+     depends_on:
+       - db
+       - redis
+       - django_service
+
+
+
+
 volumes:
   celeryuser:
   pgdata:
+  celeryservice:
