@@ -1,11 +1,11 @@
-version: '3.8'
+version: '3'
 services:
    redis:
       image: redis:alpine
       container_name: redis-master
 
    django_service:
-       image: my_celery_app:v4
+       image: celery_project:v2
        container_name: django_container
        ports:
          - 8000:8000
@@ -29,7 +29,7 @@ services:
    celery:
      restart: always
      container_name: celery
-     image: my_celery_app:v4
+     image: celery_project:v2
      command: celery -A MyCeleryProject.celery worker --pool=solo -l debug
      volumes:
        - celeryservice:/django
@@ -38,10 +38,21 @@ services:
        - redis
        - django_service
 
-
+   celerybeat:
+     restart: always
+     container_name: celery_beat
+     image: celery_project:v2
+     command: celery -A MyCeleryProject beat -l INFO
+     volumes:
+       - beat_service:/django
+     depends_on:
+       - db
+       - redis
+       - django_service
 
 
 volumes:
   celeryuser:
   pgdata:
   celeryservice:
+  beat_service:
