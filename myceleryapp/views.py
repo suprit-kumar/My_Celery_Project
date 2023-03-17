@@ -14,4 +14,3 @@ def index(request):
     # Calling celery task
     print("Inside check loop task")
     return HttpResponse("Welcome to the page")
-

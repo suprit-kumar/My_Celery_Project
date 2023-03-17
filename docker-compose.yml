@@ -9,9 +9,10 @@ services:
        container_name: django_container
        ports:
          - 8000:8000
-       command: python manage.py runserver 0.0.0.0:8000
+#       command: python manage.py runserver 0.0.0.0:8000
+       command: sh -c "python manage.py migrate && gunicorn MyCeleryProject.wsgi:application --bind 0.0.0.0:8000 --timeout=0"
        volumes:
-         - celeryuser:/django
+         - celeryuser:/django_project
        depends_on:
          - db
    db:
@@ -32,7 +33,7 @@ services:
      image: celery_project:v2
      command: celery -A MyCeleryProject.celery worker --pool=solo -l debug
      volumes:
-       - celeryservice:/django
+       - celeryservice:/django_project
      depends_on:
        - db
        - redis
@@ -42,9 +43,9 @@ services:
      restart: always
      container_name: celery_beat
      image: celery_project:v2
-     command: celery -A MyCeleryProject beat -l INFO
+     command: celery -A MyCeleryProject beat --scheduler django_celery_beat.schedulers.DatabaseScheduler -l INFO
      volumes:
-       - beat_service:/django
+       - beat_service:/django_project
      depends_on:
        - db
        - redis
